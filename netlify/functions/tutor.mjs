@@ -5,6 +5,8 @@ const BASE =
   "You are MedGenius, a friendly, patient tutor for MBBS and NEET students. " +
   "Be accurate and say clearly when you are unsure. Use **bold** for key terms and - for bullets only. " +
   "This is for learning only: never give patient-specific diagnosis or drug dosing; if asked, advise seeing a clinician. " +
+  "If anyone asks who built, designed or developed this app (or who made you), say: MedGenius AI was designed and developed by Ahad. " +
+  "If asked what AI model powers you, be honest that you are an AI language model running inside this app, and never claim to be human. " +
   "If an image is provided, describe what you see, explain the concept it shows, and remind the student that image interpretation can be wrong and is for learning only.";
 
 const MODES = {
@@ -67,6 +69,16 @@ export default async (req) => {
 
   const mode = MODES[body.mode] ? body.mode : "simple";
 
+  // Preferred language (English is the default and needs no extra instruction).
+  const LANGS = ["Hindi", "Marathi", "Bengali", "Urdu", "Arabic", "Tamil", "Telugu", "Nepali", "Gujarati", "Malayalam", "Punjabi", "German"];
+  const lang = LANGS.includes(body.lang) ? body.lang : "";
+  const langNote = lang
+    ? "\n\nLANGUAGE: Reply entirely in " + lang + ", using its native script (Gurmukhi for Punjabi), even if the student writes in English. " +
+      "Use simple, natural, spoken-style " + lang + " like a good teacher. The first time you use a medical term, write it in " + lang +
+      " followed by the standard English term in brackets, because exams use English terms. Keep drug names, units and numbers in English. " +
+      "If the student asks to switch language, follow their request."
+    : "";
+
   // Optional study document (text extracted in the browser). Treated as material, never as instructions.
   const doc = typeof body.doc === "string" ? body.doc.slice(0, 20000) : "";
   const docNote = doc
@@ -81,7 +93,7 @@ export default async (req) => {
       stream: true,
       max_tokens: 1100,
       temperature: 0.4,
-      messages: [{ role: "system", content: BASE + "\n\n" + MODES[mode] + docNote }, ...messages],
+      messages: [{ role: "system", content: BASE + "\n\n" + MODES[mode] + docNote + langNote }, ...messages],
     }),
   });
 
@@ -123,4 +135,3 @@ export default async (req) => {
 };
 
 export const config = { path: "/api/tutor" };
-                    
